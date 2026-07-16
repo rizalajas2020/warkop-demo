@@ -6,11 +6,17 @@ import MenuCard from './components/MenuCard';
 import CartSidebar from './components/CartSidebar';
 import CheckoutModal from './components/CheckoutModal';
 import OrderHistory from './components/OrderHistory';
+import AdminDashboard from './components/AdminDashboard';
 import { ShoppingBag, ArrowRight, Sparkles, X, ChevronRight } from 'lucide-react';
 
 export default function App() {
   // State variables
-  const [menuItems] = useState(MENU_ITEMS);
+  const [menuItems, setMenuItems] = useState(() => {
+    const saved = localStorage.getItem('warkop_menu');
+    if (saved) return JSON.parse(saved);
+    localStorage.setItem('warkop_menu', JSON.stringify(MENU_ITEMS));
+    return MENU_ITEMS;
+  });
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem('warkop_cart');
     return saved ? JSON.parse(saved) : [];
@@ -22,6 +28,9 @@ export default function App() {
   const [tableNumber, setTableNumber] = useState(() => {
     return localStorage.getItem('warkop_table') || '';
   });
+
+  // Navigation Routing State ('customer' or 'admin')
+  const [view, setView] = useState('customer');
 
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,9 +66,31 @@ export default function App() {
     }, 3000);
   };
 
-  // Detect table number from URL query parameters (useful when scanning QR code/barcode on the table)
+  // Sync menu items in other tabs when admin modifies them
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === 'warkop_menu') {
+        setMenuItems(JSON.parse(e.newValue || '[]'));
+      }
+      if (e.key === 'warkop_orders') {
+        setOrders(JSON.parse(e.newValue || '[]'));
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  // Detect view and table number from URL query parameters
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    
+    // Check view
+    if (params.get('admin') === 'true') {
+      setView('admin');
+      return;
+    }
+
+    // Check table number
     const tableParam = params.get('table') || params.get('meja');
     if (tableParam) {
       setTableNumber(tableParam);
@@ -159,6 +190,17 @@ export default function App() {
   const cartTotalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
   const cartTotalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const activeOrdersCount = orders.filter(o => o.status !== 'Selesai').length;
+
+  if (view === 'admin') {
+    return (
+      <AdminDashboard 
+        onBackToCustomer={() => {
+          setView('customer');
+          window.history.replaceState({}, document.title, '/');
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0f0f11] text-gray-100 flex flex-col font-sans select-none antialiased">
@@ -358,6 +400,22 @@ export default function App() {
         orders={orders}
         onSimulateStatusUpdate={handleSimulateStatusUpdate}
       />
+
+      {/* Footer Branding & Admin Link */}
+      <footer className="py-8 border-t border-gray-800/40 text-center bg-[#0f0f11] mt-12 px-4">
+        <p className="text-xs text-gray-600 m-0">
+          © {new Date().getFullYear()} Warkop Digital. Hak Cipta Dilindungi.
+        </p>
+        <button
+          onClick={() => {
+            setView('admin');
+            window.history.pushState({}, document.title, '/?admin=true');
+          }}
+          className="mt-3 text-[10px] uppercase tracking-wider font-extrabold text-gray-500 hover:text-amber-500 hover:underline transition cursor-pointer font-sans"
+        >
+          Kelola Toko (Admin Panel)
+        </button>
+      </footer>
 
     </div>
   );
