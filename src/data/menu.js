@@ -36,7 +36,8 @@ export const MENU_ITEMS = [
     category: 'non-coffee',
     description: 'Teh melati seduh tradisional disajikan dingin manis menyegarkan.',
     image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=500&q=80',
-    rating: 4.6
+    rating: 4.6,
+    stock: 30
   },
   {
     id: 5,
@@ -102,6 +103,7 @@ export const MENU_ITEMS = [
     category: 'snack',
     description: 'Aci digoreng renyah kenyal dengan cocolan sambal rujak manis pedas asam yang segar.',
     image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=500&q=80',
-    rating: 4.6
+    rating: 4.6,
+    stock: 35
   }
 ];

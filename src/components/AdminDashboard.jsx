@@ -35,9 +35,14 @@ export default function AdminDashboard({ onBackToCustomer }) {
   // State for menu (loaded from LocalStorage or menu.js fallback)
   const [menuItems, setMenuItems] = useState(() => {
     const saved = localStorage.getItem('warkop_menu');
-    if (saved) return JSON.parse(saved);
-    // If not in localstorage, we fall back to loading from global menu data (which is loaded in window or we can just import)
-    return []; 
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return parsed.map((item) => ({
+        ...item,
+        stock: Number.isFinite(Number(item.stock)) ? Number(item.stock) : 50
+      }));
+    }
+    return [];
   });
 
   // State for QR Generator
@@ -55,7 +60,8 @@ export default function AdminDashboard({ onBackToCustomer }) {
     description: '',
     image: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=500&q=80',
     tag: '',
-    rating: 4.8
+    rating: 4.8,
+    stock: '50'
   });
 
   // State for financial entries
@@ -320,6 +326,12 @@ export default function AdminDashboard({ onBackToCustomer }) {
       return;
     }
 
+    const stockNum = parseInt(newMenu.stock, 10);
+    if (isNaN(stockNum) || stockNum < 0) {
+      showToast("Stok menu harus berupa angka 0 atau lebih!", "warning");
+      return;
+    }
+
     const newMenuItem = {
       id: Date.now(),
       name: newMenu.name,
@@ -328,7 +340,8 @@ export default function AdminDashboard({ onBackToCustomer }) {
       description: newMenu.description || 'Tidak ada deskripsi.',
       image: newMenu.image,
       tag: newMenu.tag || undefined,
-      rating: parseFloat(newMenu.rating) || 4.5
+      rating: parseFloat(newMenu.rating) || 4.5,
+      stock: stockNum
     };
 
     const nextMenu = [...menuItems, newMenuItem];
@@ -344,8 +357,27 @@ export default function AdminDashboard({ onBackToCustomer }) {
       description: '',
       image: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=500&q=80',
       tag: '',
-      rating: 4.8
+      rating: 4.8,
+      stock: '50'
     });
+  };
+
+  const handleUpdateMenuStock = (menuId, menuName) => {
+    const targetItem = menuItems.find((item) => item.id === menuId);
+    if (!targetItem) return;
+
+    const nextStock = Number(targetItem.stock ?? 0);
+    if (Number.isNaN(nextStock) || nextStock < 0) {
+      showToast(`Stok untuk "${menuName}" tidak valid.`, 'warning');
+      return;
+    }
+
+    const nextMenu = menuItems.map((item) =>
+      item.id === menuId ? { ...item, stock: nextStock } : item
+    );
+    setMenuItems(nextMenu);
+    localStorage.setItem('warkop_menu', JSON.stringify(nextMenu));
+    showToast(`Stok "${menuName}" diperbarui menjadi ${nextStock}.`, 'success');
   };
 
   const handleDeleteMenu = (menuId, menuName) => {
@@ -1276,6 +1308,21 @@ export default function AdminDashboard({ onBackToCustomer }) {
 
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                    Stok Awal
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="50"
+                    value={newMenu.stock}
+                    onChange={(e) => setNewMenu({ ...newMenu, stock: e.target.value })}
+                    className="w-full bg-[#0f0f11] text-xs border border-gray-800 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 transition text-gray-200"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">
                     Label Tag (Opsional)
                   </label>
                   <select
@@ -1357,6 +1404,29 @@ export default function AdminDashboard({ onBackToCustomer }) {
                         <span className="text-xs text-amber-500 font-bold mt-1 block">
                           {formatPrice(item.price)}
                         </span>
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className={`text-[10px] font-bold ${Number(item.stock ?? 0) > 0 ? 'text-emerald-500' : 'text-red-400'}`}>
+                            Stok: {Number(item.stock ?? 0)}
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={Number(item.stock ?? 0)}
+                            onChange={(e) => {
+                              const nextMenu = menuItems.map((menuItem) =>
+                                menuItem.id === item.id ? { ...menuItem, stock: Number(e.target.value) || 0 } : menuItem
+                              );
+                              setMenuItems(nextMenu);
+                            }}
+                            className="w-16 bg-[#0f0f11] text-[10px] border border-gray-800 rounded px-2 py-1 text-gray-200"
+                          />
+                          <button
+                            onClick={() => handleUpdateMenuStock(item.id, item.name)}
+                            className="text-[10px] font-semibold px-2 py-1 rounded bg-gray-800 text-gray-300 hover:text-white border border-gray-700 transition"
+                          >
+                            Simpan
+                          </button>
+                        </div>
                       </div>
                     </div>
 

@@ -13,9 +13,19 @@ export default function App() {
   // State variables
   const [menuItems, setMenuItems] = useState(() => {
     const saved = localStorage.getItem('warkop_menu');
-    if (saved) return JSON.parse(saved);
-    localStorage.setItem('warkop_menu', JSON.stringify(MENU_ITEMS));
-    return MENU_ITEMS;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return parsed.map((item) => ({
+        ...item,
+        stock: Number.isFinite(Number(item.stock)) ? Number(item.stock) : 50
+      }));
+    }
+    const seededMenu = MENU_ITEMS.map((item) => ({
+      ...item,
+      stock: Number.isFinite(Number(item.stock)) ? Number(item.stock) : 50
+    }));
+    localStorage.setItem('warkop_menu', JSON.stringify(seededMenu));
+    return seededMenu;
   });
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem('warkop_cart');
