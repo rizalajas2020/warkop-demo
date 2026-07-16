@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  --color-brand-primary: #d97706; /* Amber-600 warkop theme */
+  --color-brand-secondary: #78350f; /* Amber-900 warkop theme */
+  --color-brand-dark: #0f0f11; /* Sleek dark charcoal background */
+}
+
+@layer base {
+  body {
+    background-color: var(--color-brand-dark);
+    color: #f3f4f6;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #16171d;
+}
+::-webkit-scrollbar-thumb {
+  background: #2e303a;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
